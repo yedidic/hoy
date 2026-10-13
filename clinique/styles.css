@@ -609,7 +609,7 @@
     border: 1px solid rgba(0,0,0,0.06);
   }
   .tg-event:hover { filter: brightness(0.9); box-shadow: var(--shadow-md); }
-  .tg-event .ev-time { font-weight: 600; display: block; }
+  .tg-event .ev-time { font-weight: 600; display: block; direction: ltr; text-align: right; }
   .tg-event .ev-name { opacity: 0.8; }
   .tg-class-event {
     left: 10px;
@@ -632,124 +632,157 @@
   .tenant-c7 { background: #e8cec4; color: #5a392b; }
 
   /* ---- RESPONSIVE ---- */
-  @media (max-width: 900px) {
-    #cal-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .cal-month-grid { min-width: 760px; }
+  @media (hover: none) {
+    .btn-primary:hover { transform: none; box-shadow: none; }
   }
 
   @media (max-width: 640px) {
-    .topbar { padding: 8px 10px; flex-wrap: wrap; height: auto; gap: 6px; }
-    .topbar h1 { font-size: 1.05rem; }
-    .tabs { width: 100%; overflow-x: auto; }
-    .container { padding: 12px 6px 80px; }
-    .tab { padding: 7px 12px; font-size: 0.78rem; }
-    .modal { padding: 20px; width: 95%; }
+    /* Top bar: title row + full-width segmented tabs */
+    .topbar {
+      flex-direction: column;
+      align-items: stretch;
+      height: auto;
+      gap: 8px;
+      padding: 10px 12px 8px;
+      padding-top: max(10px, env(safe-area-inset-top));
+    }
+    .topbar h1 { font-size: 1.1rem; text-align: center; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; padding: 9px 4px; font-size: 0.82rem; }
 
-    /* Convert slots table to card layout on mobile */
-    #panel-slots .table-wrap {
+    .container { padding: 14px 12px calc(80px + env(safe-area-inset-bottom)); }
+
+    .section-header h2 { font-size: 1rem; }
+
+    /* Bigger touch targets */
+    .btn-sm { padding: 7px 11px; font-size: 0.8rem; min-height: 36px; }
+    .btn-icon { min-width: 40px; min-height: 40px; justify-content: center; }
+
+    /* ---- Tables → cards ---- */
+    .table-wrap {
       overflow: visible;
       background: transparent;
       border: none;
       box-shadow: none;
     }
-    #panel-slots table {
-      display: block;
-      min-width: 0;
-      width: 100%;
-    }
-    #panel-slots thead {
-      display: none;
-    }
-    #panel-slots tbody {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      width: 100%;
-    }
-    #panel-slots tbody tr {
+    .table-wrap table { display: block; min-width: 0; width: 100%; }
+    .table-wrap thead { display: none; }
+    .table-wrap tbody { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .table-wrap tbody tr {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 10px 12px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px;
+      border-radius: var(--radius);
+      padding: 14px;
       box-shadow: var(--shadow-sm);
     }
-    #panel-slots tbody tr:hover {
-      background: var(--surface);
-      box-shadow: var(--shadow-md);
-    }
-    #panel-slots tbody td {
+    .table-wrap tbody tr:hover { background: var(--surface); }
+    .table-wrap tbody td {
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
       border: none;
       padding: 0;
       max-width: none;
-      font-size: 0.8rem;
+      min-width: 0;
+      font-size: 0.88rem;
+      grid-column: 1 / -1;
     }
-    #panel-slots tbody td::before {
+    .table-wrap tbody td[data-label]::before {
       content: attr(data-label);
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: var(--text-secondary);
-      text-transform: uppercase;
       letter-spacing: 0.03em;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
-    #panel-slots tbody td:nth-child(1) {
-      grid-column: 1 / 2;
-    }
-    #panel-slots tbody td:nth-child(2),
-    #panel-slots tbody td:nth-child(3) {
-      grid-column: auto;
-    }
-    #panel-slots tbody td:nth-child(4) {
-      grid-column: 1 / 2;
-    }
-    #panel-slots tbody td:nth-child(5) {
-      grid-column: 2 / 3;
-    }
-    #panel-slots tbody td:nth-child(6) {
-      grid-column: 1 / -1;
-    }
-    #panel-slots tbody td:nth-child(7) {
-      grid-column: 1 / -1;
+    .table-wrap tbody td[colspan] { padding: 0; }
+    .table-wrap tbody tr:has(td[colspan]) { padding: 0; }
+    .table-wrap tbody td .type-chip { margin: 2px 0; }
+    .table-wrap tbody td:has(.type-chip + .type-chip) { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+    .table-wrap tbody td:has(.type-chip + .type-chip)::before { flex-basis: 100%; }
+
+    /* Actions row at the bottom of each card */
+    .table-wrap tbody td.actions-cell {
       flex-direction: row;
+      justify-content: flex-end;
       gap: 6px;
-      justify-content: flex-start;
-      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
     }
-    #panel-slots tbody td:nth-child(7)::before {
-      display: none;
-    }
+    .table-wrap tbody td.actions-cell .btn { flex: 1; justify-content: center; background: var(--surface-hover); }
+    .table-wrap tbody td.actions-cell .btn-danger { background: var(--danger-bg); }
 
-    .type-chip {
-      font-size: 0.72rem;
-      padding: 2px 10px;
-    }
-    .btn-sm {
-      padding: 5px 10px;
-      font-size: 0.78rem;
-    }
+    /* Slot cards: date full width, then start|end, tenant|type, client */
+    #panel-slots tbody td.slot-date { font-weight: 600; font-size: 0.95rem; }
+    #panel-slots tbody td.slot-time,
+    #panel-slots tbody td.slot-tenant,
+    #panel-slots tbody td.slot-type { grid-column: auto; }
 
-    /* Accordion adjustments */
-    .accordion-header {
-      padding: 12px 14px;
-    }
-    .accordion-title {
-      font-size: 0.88rem;
-    }
-    .count-badge {
-      font-size: 0.7rem;
-      padding: 1px 8px;
-    }
+    /* Accordion */
+    .accordion-header { padding: 13px 14px; }
+    .accordion-title { font-size: 0.9rem; }
+    .count-badge { font-size: 0.7rem; padding: 1px 8px; }
 
-    .cal-toolbar { gap: 6px; }
-    .cal-title { min-width: 120px; font-size: 0.92rem; }
-    .cal-month-grid { min-width: 680px; }
-    .cal-month-grid .day-cell { min-height: 68px; }
-    .cal-event { font-size: 0.66rem; }
-    .form-row { grid-template-columns: 1fr; }
-    .cal-views { margin-inline-start: 0; }
+    /* ---- Calendar toolbar: [→ title ←] on top, [today | views] below ---- */
+    .cal-toolbar { gap: 8px; }
+    .cal-toolbar > .btn-icon:first-child { order: 1; }
+    .cal-title { order: 2; flex: 1 1 calc(100% - 112px); min-width: 0; font-size: 0.98rem; white-space: nowrap; }
+    .cal-toolbar > .btn-icon:nth-child(3) { order: 3; }
+    .cal-toolbar > .btn-outline { order: 4; min-height: 36px; }
+    .cal-views { order: 5; margin-inline-start: auto; }
+    .cal-views .btn { min-height: 36px; padding: 6px 14px; }
+
+    /* Month: fits the screen; events become color bars, tap a day to open it */
+    .cal-month-grid .day-header { padding: 8px 0; font-size: 0.68rem; }
+    .cal-month-grid .day-cell { min-height: 60px; padding: 3px 2px; }
+    .day-num { font-size: 0.75rem; padding: 1px 4px; }
+    .day-cell.today .day-num { width: 22px; height: 22px; }
+    .cal-month-grid .cal-event {
+      font-size: 0;
+      height: 5px;
+      padding: 0;
+      margin: 2px 3px;
+      border-radius: 3px;
+      pointer-events: none;
+    }
+    .cal-month-grid .cal-class-event { border: none; }
+    .cal-more { font-size: 0.6rem; padding: 0 3px; line-height: 1.2; }
+
+    /* Week: keep columns readable, scroll sideways */
+    .cal-time-grid { -webkit-overflow-scrolling: touch; }
+    .cal-time-grid.tg-week .tg-header,
+    .cal-time-grid.tg-week .tg-body { min-width: 640px; }
+    .tg-header-cell { font-size: 0.72rem; padding: 8px 2px; }
+    .tg-event { font-size: 0.7rem; padding: 2px 5px; }
+
+    /* ---- Modal as bottom sheet ---- */
+    .modal-overlay { align-items: flex-end; }
+    .modal {
+      width: 100%;
+      max-width: none;
+      border-radius: 18px 18px 0 0;
+      padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+      max-height: 88vh;
+      animation: sheetUp 0.25s ease;
+    }
+    .form-row { grid-template-columns: 1fr; gap: 0; }
+    /* 16px prevents iOS zoom on focus */
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="date"],
+    .form-group input[type="time"],
+    .form-group select { font-size: 16px; padding: 12px 14px; }
+    .checkbox-item { padding: 13px 14px; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions .btn { flex: 1; justify-content: center; padding: 12px 16px; font-size: 0.92rem; }
+
+    .toast-container {
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      width: calc(100% - 32px);
+    }
+    .toast { width: 100%; text-align: center; }
   }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
