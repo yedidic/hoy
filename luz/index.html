@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוז – מחולל לוח שיעורים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet" crossorigin="anonymous" data-luz-font>
+<link rel="stylesheet" href="./luz.css" data-luz-css>
+<style>
+  :root {
+    --bg: #ece7e2; --card: #fff; --ink: #3b3b3b; --muted: #8a8580; --line: #e2dcd6;
+    --accent: #8f7a72; --accent-soft: #f1ebe8; --ok: #6f7a5a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: 'Heebo', Arial, sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  .app { display: grid; grid-template-columns: 440px 1fr 320px; grid-template-rows: auto 1fr; height: 100vh; }
+  .topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .topbar h1 { font-size: 20px; margin: 0; font-weight: 800; }
+  .topbar .range { color: var(--muted); direction: ltr; }
+  .topbar .spacer { flex: 1; }
+
+  .btn { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .btn-primary:hover { filter: brightness(1.05); }
+  .btn-sm { padding: 4px 10px; font-size: 13px; }
+  .btn[disabled] { opacity: .5; cursor: wait; }
+
+  /* ---------- wizard panel ---------- */
+  .panel { background: var(--card); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .steps { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .step-tab { border: 0; background: none; padding: 6px 8px; border-radius: 999px; cursor: pointer; color: var(--muted); white-space: nowrap; }
+  .step-tab b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--line); color: var(--ink); font-size: 12px; margin-left: 4px; }
+  .step-tab.active { background: var(--accent-soft); color: var(--ink); font-weight: 700; }
+  .step-tab.active b { background: var(--accent); color: #fff; }
+  .step-body { flex: 1; overflow-y: auto; padding: 16px 18px 24px; }
+  .step-body h3 { margin: 0 0 4px; font-size: 18px; }
+  .step-body h4 { margin: 18px 0 8px; font-size: 14px; color: var(--accent); }
+  .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .step-foot { display: flex; justify-content: space-between; padding: 10px 18px; border-top: 1px solid var(--line); }
+
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .field > span { font-size: 13px; color: var(--muted); }
+  .input, .field input, .field select { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: #fff; width: 100%; }
+  .input:focus, .field input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; }
+
+  .weeknav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 12px 0; }
+  .weeknav strong { font-size: 20px; direction: ltr; }
+
+  .cls { display: grid; grid-template-columns: 52px 1fr; gap: 6px 8px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .cls .t { font-weight: 700; direction: ltr; text-align: left; }
+  .cls .opts { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .cls.hidden .input, .cls.hidden .t { opacity: .4; text-decoration: line-through; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 13px; cursor: pointer; }
+  .chip:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+  .chip input { margin: 0; }
+  .opts select { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 13px; background: #fff; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .pair .from { font-size: 14px; }
+
+  .extra { display: grid; grid-template-columns: 1fr 90px; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; }
+  .extra .wide { grid-column: 1 / -1; }
+  .extra .row { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+
+  .bgs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .bg-opt { border: 2px solid var(--line); border-radius: 10px; padding: 0; overflow: hidden; aspect-ratio: 9 / 16; cursor: pointer; position: relative; background: #f3f0ec url(./assets/paper.jpg) center / cover; }
+  .bg-opt img { position: absolute; inset: auto 0 0 0; width: 100%; opacity: .45; }
+  .bg-opt.active { border-color: var(--accent); }
+  .swatches { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+  .swatch.active { box-shadow: 0 0 0 2px var(--accent); }
+  .swatches input[type=color] { width: 40px; height: 34px; border: 0; background: none; padding: 0; cursor: pointer; }
+
+  .share-actions { display: grid; gap: 8px; margin-bottom: 16px; }
+  textarea.code { width: 100%; height: 120px; direction: ltr; font: 12px/1.4 ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; }
+
+  /* ---------- preview ---------- */
+  .preview { position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+  #scaler { width: 1080px; height: 1920px; flex: none; transform-origin: center center; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
+
+  /* ---------- changes log (left column) ---------- */
+  .log { background: var(--card); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .log-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .log-head h3 { margin: 0; font-size: 16px; }
+  .log-head .count { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .log-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+  .log-empty { color: var(--muted); font-size: 13px; padding: 14px; }
+  .log-group { font-size: 12px; color: var(--accent); font-weight: 700; padding: 10px 14px 4px; }
+  .log-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 14px; border-bottom: 1px dashed var(--line); }
+  .log-item:hover { background: var(--accent-soft); }
+  .log-text { flex: 1; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+  .log-text small { display: block; color: var(--muted); font-size: 12px; }
+  .log-undo { flex: none; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
+  .log-undo:hover { border-color: #a3423a; color: #a3423a; }
+
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; transition: transform .25s; z-index: 10; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #a3423a; }
+
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: auto 62vh auto; height: auto; }
+    .preview { grid-row: 2; }
+    .panel { grid-row: 3; border-left: 0; border-top: 1px solid var(--line); }
+    .log { grid-row: 4; border-right: 0; border-top: 1px solid var(--line); }
+    .log-list { max-height: 50vh; }
+    .topbar { padding: 10px 12px; gap: 8px; }
+    .topbar h1 { font-size: 16px; }
+    .topbar .range { display: none; }
+    .topbar .btn { padding: 7px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>לוז ✦ לוח שיעורים</h1>
+    <span class="range" id="top-range"></span>
+    <span class="spacer"></span>
+    <button class="btn" data-act="copy-link">העתקת קישור</button>
+    <button class="btn btn-primary" data-act="download">⬇ הורדת תמונה</button>
+  </div>
+
+  <aside class="panel">
+    <nav class="steps" id="steps"></nav>
+    <div class="step-body" id="step-body"></div>
+    <div class="step-foot">
+      <button class="btn" data-act="step-prev">→ הקודם</button>
+      <button class="btn" data-act="step-next">הבא ←</button>
+    </div>
+  </aside>
+
+  <main class="preview" id="preview">
+    <div id="scaler"><div id="story"></div></div>
+  </main>
+
+  <aside class="log">
+    <div class="log-head">
+      <h3>שינויים <span class="count" id="log-count"></span></h3>
+      <button class="btn btn-sm" data-act="undo-all">ביטול הכל</button>
+    </div>
+    <div class="log-list" id="log-list"></div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<script src="./luz.js"></script>
+<script>
+// ==================== STATE ====================
+const STEPS = [
+  { id: 'week', title: 'שבוע' },
+  { id: 'classes', title: 'שיעורים' },
+  { id: 'names', title: 'שמות' },
+  { id: 'notes', title: 'הערות' },
+  { id: 'look', title: 'עיצוב' },
+  { id: 'share', title: 'שיתוף' }
+];
+const state = {
+  cfg: {},
+  week: '',
+  classes: [],
+  loading: false,
+  step: 0,
+  code: '',
+  scopes: new Map(), // classId -> 'series' | 'one', chosen in this session
+  log: []            // current entries of the changes log
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const dm = isoDate => { const d = LUZ.parseISO(isoDate); return `${d.getDate()}/${d.getMonth() + 1}`; };
+
+// ==================== LOAD / PAINT ====================
+async function load(force = false) {
+  state.week = state.cfg.week || LUZ.defaultWeek();
+  state.loading = true;
+  LUZ.renderMessage($('story'), state.cfg, state.week, 'טוען…');
+  renderStep();
+  try {
+    state.classes = await LUZ.fetchWeek(state.week, { force });
+  } catch (e) {
+    state.classes = [];
+    toast('שגיאה בטעינת השיעורים מ-Arbox', 'error');
+  }
+  state.loading = false;
+  paint();
+  renderStep();
+}
+
+function paint() {
+  LUZ.render($('story'), state.cfg, state.classes, state.week);
+  $('top-range').textContent = state.cfg.range || LUZ.rangeLabel(state.week);
+  renderLog();
+  syncUrl();
+}
+
+// ==================== CHANGES LOG ====================
+// Everything saved in ?c=, one row per change, each with its own undo
+const OV_LABELS = { new: 'סימון חדש!', hide: 'הסתרה', label: 'טקסט' };
+const FMT_LABELS = { coach: 'מורה בלבד', 'coach-cat': 'מורה ואז סוג' };
+
+function classDesc(match) {
+  const c = state.classes.find(match);
+  if (!c) return null;
+  return `${LUZ.DAYS[LUZ.parseISO(c.date).getDay()]} ${c.time} · ${LUZ.defaultText({ ...state.cfg, series: {}, one: {} }, c, LUZ.sharedFirstNames(state.classes))}`;
+}
+
+function changeList() {
+  const cfg = state.cfg;
+  const items = [];
+  const add = (group, text, sub, undo, subHtml) => items.push({ group, text, sub, undo, subHtml });
+  const drop = (name, key) => () => { delete cfg[name][key]; if (!Object.keys(cfg[name]).length) delete cfg[name]; };
+
+  if (cfg.week) add('שבוע', `שבוע קבוע: ${LUZ.rangeLabel(cfg.week)}`, 'במקום השבוע הנוכחי', () => { delete cfg.week; return 'reload'; });
+
+  [['series', 'כל שבוע', id => c => c.series === id], ['one', 'השבוע בלבד', id => c => c.id === id]].forEach(([name, scope, by]) => {
+    Object.entries(cfg[name] || {}).forEach(([id, o]) => {
+      const desc = classDesc(by(id)) || `${name === 'series' ? 'סדרה' : 'שיעור'} #${id} (לא בשבוע הזה)`;
+      Object.keys(o).forEach(k => add('שיעורים', k === 'label' ? `טקסט: "${o.label}"` : OV_LABELS[k] || k, `${desc} · ${scope}`, () => {
+        delete o[k];
+        if (!Object.keys(o).length) drop(name, id)();
+      }));
+    });
+  });
+
+  Object.entries(cfg.rename || {}).forEach(([from, to]) => add('שמות', `${from} ← ${to}`, 'שם סוג שיעור', drop('rename', from)));
+  Object.entries(cfg.coach || {}).forEach(([from, to]) => add('שמות', `${from} ← ${to}`, 'שם מורה', drop('coach', from)));
+  if (cfg.fmt) add('שמות', `פורמט שורה: ${FMT_LABELS[cfg.fmt] || cfg.fmt}`, '', () => { delete cfg.fmt; });
+
+  Object.entries(cfg.notes || {}).sort().forEach(([date, text]) =>
+    add('הערות', text, `הערה · ${LUZ.DAYS[LUZ.parseISO(date).getDay()]} ${dm(date)}`, drop('notes', date)));
+  (cfg.extra || []).forEach((e, i) => add('הערות', e.label || '(שורה ריקה)',
+    `שורה נוספת · ${LUZ.DAYS[LUZ.parseISO(e.date).getDay()]} ${dm(e.date)}${e.time ? ' ' + e.time : ''}${e.new ? ' · חדש!' : ''}`,
+    () => { cfg.extra.splice(i, 1); if (!cfg.extra.length) delete cfg.extra; }));
+
+  if (cfg.bg) add('עיצוב', `רקע: ${cfg.bg}`, '', () => { delete cfg.bg; });
+  if (cfg.color) add('עיצוב', 'צבע כותרות', `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${esc(cfg.color)};vertical-align:middle"></span> <bdi dir="ltr">${esc(cfg.color)}</bdi>`, () => { delete cfg.color; }, true);
+  if (cfg.logo === false) add('עיצוב', 'הסתרת לוגו', '', () => { delete cfg.logo; });
+  [['sub', 'כותרת משנה'], ['title', 'כותרת'], ['range', 'טווח תאריכים']].forEach(([k, name]) => {
+    if (cfg[k] != null && cfg[k] !== '') add('עיצוב', `${name}: "${cfg[k]}"`, '', () => { delete cfg[k]; });
+  });
+  return items;
+}
+
+function renderLog() {
+  const items = state.log = changeList();
+  $('log-count').textContent = items.length ? `(${items.length})` : '';
+  document.querySelector('[data-act="undo-all"]').disabled = !items.length;
+  let group = '';
+  $('log-list').innerHTML = items.length ? items.map((it, i) => {
+    const head = it.group !== group ? `<div class="log-group">${esc(group = it.group)}</div>` : '';
+    const sub = it.subHtml ? it.sub : esc(it.sub);
+    return `${head}
+      <div class="log-item">
+        <div class="log-text">${esc(it.text)}${it.sub ? `<small>${sub}</small>` : ''}</div>
+        <button class="log-undo" data-act="undo" data-i="${i}" title="ביטול השינוי">↺ ביטול</button>
+      </div>`;
+  }).join('') : '<div class="log-empty">אין שינויים. הלוח מוצג כפי שהוא ב-Arbox.</div>';
+}
+
+function undo(i) {
+  const it = state.log[i];
+  if (!it) return;
+  const r = it.undo();
+  state.scopes.clear();
+  if (r === 'reload') return load();
+  renderStep();
+  paint();
+}
+
+function undoAll() {
+  if (!state.log.length || !confirm('לבטל את כל השינויים?')) return;
+  const weekChanged = !!state.cfg.week;
+  state.cfg = {};
+  state.scopes.clear();
+  if (weekChanged) return load();
+  renderStep();
+  paint();
+}
+
+let urlTimer;
+function syncUrl() {
+  clearTimeout(urlTimer);
+  urlTimer = setTimeout(flushUrl, 250);
+}
+async function flushUrl() {
+  clearTimeout(urlTimer);
+  state.code = await LUZ.encode(state.cfg);
+  history.replaceState(null, '', `${location.pathname}?c=${state.code}`);
+  const ta = $('script-code');
+  if (ta) ta.value = scriptSnippet();
+  return state.code;
+}
+
+function fitPreview() {
+  const p = $('preview');
+  const s = Math.min((p.clientWidth - 40) / 1080, (p.clientHeight - 40) / 1920);
+  const sc = $('scaler');
+  sc.style.transform = `scale(${s})`;
+  sc.style.margin = `${(1920 * s - 1920) / 2}px ${(1080 * s - 1080) / 2}px`;
+}
+new ResizeObserver(fitPreview).observe($('preview'));
+
+// ==================== CLASS OVERRIDES ====================
+const classById = id => state.classes.find(c => c.id === id);
+function scopeOf(c) {
+  if (state.scopes.has(c.id)) return state.scopes.get(c.id);
+  if (state.cfg.one && state.cfg.one[c.id]) return 'one';
+  return c.series ? 'series' : 'one';
+}
+const bucketOf = (c, scope) => scope === 'series' ? ['series', c.series] : ['one', c.id];
+function getOv(c) {
+  const [b, k] = bucketOf(c, scopeOf(c));
+  return (state.cfg[b] && state.cfg[b][k]) || {};
+}
+function setOv(c, key, val) {
+  const [b, k] = bucketOf(c, scopeOf(c));
+  const bucket = state.cfg[b] = state.cfg[b] || {};
+  const o = bucket[k] = bucket[k] || {};
+  if (val) o[key] = val; else delete o[key];
+  if (!Object.keys(o).length) delete bucket[k];
+}
+function changeScope(c, to) {
+  const from = scopeOf(c);
+  if (from === to) return;
+  const [fb, fk] = bucketOf(c, from);
+  const o = state.cfg[fb] && state.cfg[fb][fk];
+  if (o) delete state.cfg[fb][fk];
+  state.scopes.set(c.id, to);
+  if (o) {
+    const [tb, tk] = bucketOf(c, to);
+    state.cfg[tb] = state.cfg[tb] || {};
+    state.cfg[tb][tk] = o;
+  }
+}
+
+// ==================== STEPS ====================
+function renderStep() {
+  $('steps').innerHTML = STEPS.map((s, i) =>
+    `<button class="step-tab${i === state.step ? ' active' : ''}" data-act="step" data-i="${i}"><b>${i + 1}</b>${s.title}</button>`).join('');
+  const body = $('step-body');
+  const scroll = body.scrollTop;
+  body.innerHTML = STEP_VIEWS[STEPS[state.step].id]();
+  body.scrollTop = scroll;
+  document.querySelector('[data-act="step-prev"]').style.visibility = state.step ? '' : 'hidden';
+  document.querySelector('[data-act="step-next"]').style.visibility = state.step < STEPS.length - 1 ? '' : 'hidden';
+}
+
+const STEP_VIEWS = {
+  week() {
+    return `
+      <h3>איזה שבוע?</h3>
+      <p class="hint">השיעורים נטענים ישירות מ-Arbox.</p>
+      <div class="weeknav">
+        <button class="btn" data-act="week-prev">→ קודם</button>
+        <strong>${esc(LUZ.rangeLabel(state.week))}</strong>
+        <button class="btn" data-act="week-next">הבא ←</button>
+      </div>
+      <label class="field"><span>קפיצה לתאריך</span><input type="date" data-f="week-date" value="${state.week}"></label>
+      <label class="check"><input type="checkbox" data-f="week-auto" ${state.cfg.week ? '' : 'checked'}>
+        תמיד השבוע הנוכחי (עובר לשבוע הבא בשישי ב-14:00)</label>
+      <p class="hint">מומלץ להשאיר מסומן לקישור ולהטמעה באתר, כך שהלוח מתעדכן לבד כל שבוע.</p>
+      <p class="hint">${state.loading ? 'טוען…' : `נטענו ${state.classes.length} שיעורים.`}
+        <button class="btn btn-sm" data-act="reload">רענון</button></p>`;
+  },
+
+  classes() {
+    if (state.loading) return '<p class="hint">טוען…</p>';
+    if (!state.classes.length) return '<h3>שיעורים</h3><p class="hint">אין שיעורים בשבוע הזה.</p>';
+    const shared = LUZ.sharedFirstNames(state.classes);
+    const days = LUZ.weekDates(state.week).map((date, i) => {
+      const list = state.classes.filter(c => c.date === date);
+      if (!list.length) return '';
+      return `<h4>${LUZ.DAYS[i]} ${dm(date)}</h4>` + list.map(c => {
+        const o = getOv(c), scope = scopeOf(c);
+        return `
+          <div class="cls${o.hide ? ' hidden' : ''}" data-id="${c.id}">
+            <span class="t">${esc(c.time)}</span>
+            <input class="input" type="text" data-f="cls-label" value="${esc(o.label || '')}" placeholder="${esc(LUZ.defaultText(state.cfg, c, shared))}">
+            <div class="opts">
+              <label class="chip"><input type="checkbox" data-f="cls-new" ${o.new ? 'checked' : ''}>חדש!</label>
+              <label class="chip"><input type="checkbox" data-f="cls-hide" ${o.hide ? 'checked' : ''}>הסתרה</label>
+              ${c.series ? `<select data-f="cls-scope" title="על מה חל השינוי">
+                <option value="series" ${scope === 'series' ? 'selected' : ''}>כל שבוע</option>
+                <option value="one" ${scope === 'one' ? 'selected' : ''}>השבוע בלבד</option>
+              </select>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }).join('');
+    return `
+      <h3>שיעורים</h3>
+      <p class="hint">שינוי טקסט, סימון "חדש!" או הסתרה. "כל שבוע" נשמר לסדרה וחוזר בשבועות הבאים.</p>
+      ${days}`;
+  },
+
+  names() {
+    const cats = [...new Set(state.classes.map(c => c.cat).filter(Boolean))].sort();
+    const shared = LUZ.sharedFirstNames(state.classes);
+    const coaches = [...new Map(state.classes.filter(c => c.coach).map(c => [c.coach, c])).values()]
+      .sort((a, b) => a.coach.localeCompare(b.coach));
+    const fmt = state.cfg.fmt || 'cat-coach';
+    return `
+      <h3>שמות</h3>
+      <p class="hint">שינויי שם חלים על כל השיעורים ונשמרים לשבועות הבאים.</p>
+      <label class="field"><span>פורמט שורה</span>
+        <select data-f="fmt">
+          <option value="cat-coach" ${fmt === 'cat-coach' ? 'selected' : ''}>ויניאסה - שירה</option>
+          <option value="coach" ${fmt === 'coach' ? 'selected' : ''}>שירה</option>
+          <option value="coach-cat" ${fmt === 'coach-cat' ? 'selected' : ''}>שירה ויניאסה</option>
+        </select></label>
+      <h4>סוגי שיעור</h4>
+      ${cats.map(cat => `
+        <div class="pair"><span class="from">${esc(cat)}</span>
+          <input class="input" type="text" data-f="rename" data-key="${esc(cat)}" value="${esc((state.cfg.rename || {})[cat] || '')}" placeholder="${esc(cat)}"></div>`).join('') || '<p class="hint">—</p>'}
+      <h4>מורים</h4>
+      ${coaches.map(c => `
+        <div class="pair"><span class="from">${esc(c.coach)}</span>
+          <input class="input" type="text" data-f="coach" data-key="${esc(c.coach)}" value="${esc((state.cfg.coach || {})[c.coach] || '')}" placeholder="${esc(LUZ.coachLabel({}, c, shared))}"></div>`).join('') || '<p class="hint">—</p>'}`;
+  },
+
+  notes() {
+    const dates = LUZ.weekDates(state.week);
+    const notes = state.cfg.notes || {};
+    const extras = (state.cfg.extra || []).map((e, i) => ({ e, i })).filter(x => dates.includes(x.e.date));
+    return `
+      <h3>הערות ותוספות</h3>
+      <p class="hint">הערה מופיעה בראש היום (למשל "חג סוכות שמח 🌸"). שייכת לתאריך הספציפי.</p>
+      ${dates.map((d, i) => `
+        <label class="field"><span>${LUZ.DAYS[i]} ${dm(d)}</span>
+          <input type="text" data-f="note" data-date="${d}" value="${esc(notes[d] || '')}"></label>`).join('')}
+      <h4>שורות נוספות (לא מ-Arbox)</h4>
+      <p class="hint">סדנאות, אירועים מיוחדים וכו׳.</p>
+      ${extras.map(({ e, i }) => `
+        <div class="extra" data-i="${i}">
+          <input class="input wide" type="text" data-f="extra" data-k="label" value="${esc(e.label || '')}" placeholder="סדנת עמידות ידיים - חביבה">
+          <select class="input" data-f="extra" data-k="date">
+            ${dates.map((d, j) => `<option value="${d}" ${d === e.date ? 'selected' : ''}>${LUZ.DAYS[j]} ${dm(d)}</option>`).join('')}
+          </select>
+          <input class="input" type="time" data-f="extra" data-k="time" value="${esc(e.time || '')}">
+          <div class="row">
+            <label class="chip"><input type="checkbox" data-f="extra" data-k="new" ${e.new ? 'checked' : ''}>חדש!</label>
+            <button class="btn btn-sm" data-act="extra-del" data-i="${i}">מחיקה</button>
+          </div>
+        </div>`).join('')}
+      <button class="btn" data-act="extra-add">＋ הוספת שורה</button>`;
+  },
+
+  look() {
+    const c = Object.assign({}, LUZ.DEFAULTS, state.cfg);
+    return `
+      <h3>עיצוב</h3>
+      <h4>רקע</h4>
+      <div class="bgs">
+        ${Object.entries(LUZ.BGS).map(([k, b]) => `
+          <button class="bg-opt${c.bg === k ? ' active' : ''}" data-act="bg" data-v="${k}" title="${k}">
+            ${b ? `<img src="./${b.src}" alt="">` : ''}</button>`).join('')}
+      </div>
+      <h4>צבע כותרות הימים</h4>
+      <div class="swatches">
+        ${LUZ.PALETTE.map(p => `<button class="swatch${c.color === p ? ' active' : ''}" style="background:${p}" data-act="color" data-v="${p}"></button>`).join('')}
+        <input type="color" data-f="color" value="${esc(c.color)}" title="צבע אחר">
+      </div>
+      <h4>כותרת</h4>
+      <label class="check"><input type="checkbox" data-f="logo" ${c.logo !== false ? 'checked' : ''}>הצגת לוגו</label>
+      <label class="field"><span>כותרת משנה</span><input type="text" data-f="text" data-k="sub" value="${esc(state.cfg.sub ?? '')}" placeholder="${esc(LUZ.DEFAULTS.sub)}"></label>
+      <label class="field"><span>כותרת</span><input type="text" data-f="text" data-k="title" value="${esc(state.cfg.title ?? '')}" placeholder="${esc(LUZ.DEFAULTS.title)}"></label>
+      <label class="field"><span>טווח תאריכים</span><input type="text" data-f="text" data-k="range" value="${esc(state.cfg.range ?? '')}" placeholder="${esc(LUZ.rangeLabel(state.week))}"></label>
+      <p class="hint">שדה ריק = ברירת מחדל. טווח תאריכים קבוע לא יתעדכן אוטומטית.</p>`;
+  },
+
+  share() {
+    return `
+      <h3>הורדה ושיתוף</h3>
+      <p class="hint">כל העריכות שמורות בקישור עצמו. אפשר לשמור אותו ולחזור אליו.</p>
+      <div class="share-actions">
+        <button class="btn btn-primary" data-act="download">⬇ הורדת תמונה לסטורי (1080×1920)</button>
+        <button class="btn" data-act="copy-link">העתקת קישור לעורך</button>
+        <button class="btn" data-act="copy-embed">העתקת קישור לתצוגה (embed.html)</button>
+        <button class="btn" data-act="open-embed">פתיחת התצוגה בלשונית חדשה</button>
+      </div>
+      <h4>הטמעה באתר</h4>
+      <p class="hint">להדביק באתר במקום שבו הלוח צריך להופיע. הלוח רספונסיבי ומתעדכן מ-Arbox בכל טעינה.</p>
+      <textarea class="code" id="script-code" readonly>${esc(scriptSnippet())}</textarea>
+      <button class="btn" data-act="copy-script">העתקת קוד הטמעה</button>`;
+  }
+};
+
+// ==================== LINKS ====================
+const editorUrl = () => `${location.origin}${location.pathname}?c=${state.code}`;
+const embedUrl = () => new URL(`embed.html?c=${state.code}`, location.href).href;
+const scriptSnippet = () =>
+  `<div id="luz-schedule"></div>\n<script src="${new URL('luz.js', location.href).href}" data-luz data-target="#luz-schedule" data-c="${state.code}" async><\/script>`;
+
+async function copy(text, msg) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  toast(msg);
+}
+
+let toastTimer;
+function toast(msg, type) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast show${type ? ' ' + type : ''}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ==================== DOWNLOAD ====================
+async function download(btn) {
+  if (state.loading) return toast('עוד טוען…');
+  const buttons = document.querySelectorAll('[data-act="download"]');
+  buttons.forEach(b => b.disabled = true);
+  try {
+    const node = $('story');
+    await document.fonts.ready;
+    await Promise.all([...node.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
+    const url = await htmlToImage.toPng(node, { width: 1080, height: 1920, pixelRatio: 1 });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `luz-${state.week}.png`;
+    a.click();
+  } catch (e) {
+    console.error(e);
+    toast('ההורדה נכשלה', 'error');
+  } finally {
+    buttons.forEach(b => b.disabled = false);
+  }
+}
+
+// ==================== EVENTS ====================
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const cfg = state.cfg;
+  switch (el.dataset.act) {
+    case 'step': state.step = Number(el.dataset.i); renderStep(); break;
+    case 'step-prev': state.step = Math.max(0, state.step - 1); renderStep(); break;
+    case 'step-next': state.step = Math.min(STEPS.length - 1, state.step + 1); renderStep(); break;
+    case 'week-prev':
+    case 'week-next':
+      cfg.week = LUZ.iso(LUZ.addDays(LUZ.parseISO(state.week), el.dataset.act === 'week-next' ? 7 : -7));
+      if (cfg.week === LUZ.defaultWeek()) delete cfg.week;
+      load();
+      break;
+    case 'reload': load(true); break;
+    case 'undo': undo(Number(el.dataset.i)); break;
+    case 'undo-all': undoAll(); break;
+    case 'extra-add':
+      (cfg.extra = cfg.extra || []).push({ date: LUZ.weekDates(state.week)[0], time: '', label: '', new: false });
+      renderStep(); paint();
+      break;
+    case 'extra-del':
+      cfg.extra.splice(Number(el.dataset.i), 1);
+      renderStep(); paint();
+      break;
+    case 'bg': cfg.bg = el.dataset.v; renderStep(); paint(); break;
+    case 'color': cfg.color = el.dataset.v; renderStep(); paint(); break;
+    case 'download': download(); break;
+    case 'copy-link': await flushUrl(); copy(editorUrl(), 'הקישור הועתק'); break;
+    case 'copy-embed': await flushUrl(); copy(embedUrl(), 'קישור התצוגה הועתק'); break;
+    case 'open-embed': await flushUrl(); window.open(embedUrl(), '_blank'); break;
+    case 'copy-script': await flushUrl(); copy(scriptSnippet(), 'קוד ההטמעה הועתק'); break;
+  }
+});
+
+function onField(e) {
+  const el = e.target;
+  const f = el.dataset && el.dataset.f;
+  if (!f) return;
+  // text-like inputs react on every keystroke, the rest on change
+  const live = el.matches('input[type=text], input[type=time], input[type=color]');
+  if ((e.type === 'input') !== live) return;
+
+  const cfg = state.cfg;
+  const map = name => (cfg[name] = cfg[name] || {});
+  const setKey = (obj, k, v) => { if (v) obj[k] = v; else delete obj[k]; };
+  const row = el.closest('.cls');
+  const c = row && classById(row.dataset.id);
+
+  switch (f) {
+    case 'week-auto':
+      if (el.checked) delete cfg.week; else cfg.week = state.week;
+      return load();
+    case 'week-date':
+      if (!el.value) return;
+      cfg.week = LUZ.weekOf(LUZ.parseISO(el.value));
+      if (cfg.week === LUZ.defaultWeek()) delete cfg.week;
+      return load();
+    case 'cls-label': setOv(c, 'label', el.value.trim()); break;
+    case 'cls-new': setOv(c, 'new', el.checked ? 1 : 0); break;
+    case 'cls-hide': setOv(c, 'hide', el.checked ? 1 : 0); row.classList.toggle('hidden', el.checked); break;
+    case 'cls-scope': changeScope(c, el.value); break;
+    case 'fmt': cfg.fmt = el.value === 'cat-coach' ? undefined : el.value; break;
+    case 'rename': setKey(map('rename'), el.dataset.key, el.value.trim()); break;
+    case 'coach': setKey(map('coach'), el.dataset.key, el.value.trim()); break;
+    case 'note': setKey(map('notes'), el.dataset.date, el.value.trim()); break;
+    case 'extra': {
+      const x = cfg.extra[Number(el.closest('.extra').dataset.i)];
+      x[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value;
+      break;
+    }
+    case 'color': cfg.color = el.value; break;
+    case 'logo': cfg.logo = el.checked ? undefined : false; break;
+    case 'text': cfg[el.dataset.k] = el.value || undefined; break;
+  }
+  paint();
+}
+document.addEventListener('input', onField);
+document.addEventListener('change', onField);
+
+// ==================== INIT ====================
+(async () => {
+  state.cfg = await LUZ.decode(new URLSearchParams(location.search).get('c'));
+  fitPreview();
+  load();
+})();
+</script>
+</body>
+</html>

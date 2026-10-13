@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוח שיעורים – בית של יוגה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800&display=swap" rel="stylesheet" crossorigin="anonymous" data-luz-font>
+<link rel="stylesheet" href="./luz.css" data-luz-css>
+<style>
+  html, body { margin: 0; min-height: 100%; background: #e9e4df; }
+  body.fixed { height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  body.fixed #stage { flex: none; width: 1080px; height: 1920px; transform-origin: center center; box-shadow: 0 10px 40px rgba(0,0,0,.12); }
+  body.fluid #stage { max-width: 1080px; margin: 0 auto; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script src="./luz.js"></script>
+<script>
+  // ?c=<config from the wizard>  &mode=fixed (1080×1920 story scaled to the window, default) | fluid (responsive)
+  (async () => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode') === 'fluid' ? 'fluid' : 'fixed';
+    const stage = document.getElementById('stage');
+    document.body.classList.add(mode);
+
+    if (mode === 'fixed') {
+      const scale = () => {
+        const s = Math.min(innerWidth / 1080, innerHeight / 1920);
+        stage.style.transform = `scale(${s})`;
+        stage.style.margin = `${(1920 * s - 1920) / 2}px ${(1080 * s - 1080) / 2}px`;
+      };
+      addEventListener('resize', scale);
+      scale();
+    }
+
+    LUZ.mount(stage, await LUZ.decode(params.get('c')), { mode });
+  })();
+</script>
+</body>
+</html>

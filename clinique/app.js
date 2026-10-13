@@ -314,9 +314,9 @@ function renderTenants() {
     return;
   }
   body.innerHTML = state.tenants.map(t => `<tr>
-    <td><strong>${t.name}</strong></td>
-    <td>${typeChipsForTenant(t.types)}</td>
-    <td style="direction:ltr;text-align:right">${t.email||'—'}</td>
+    <td data-label="שם"><strong>${t.name}</strong></td>
+    <td data-label="סוגי טיפול">${typeChipsForTenant(t.types)}</td>
+    <td data-label="אימייל" style="direction:ltr;text-align:right">${t.email||'—'}</td>
     <td class="actions-cell">
       <button class="btn btn-ghost btn-sm" onclick="openTenantModal(${t.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="confirmDelete('tenants',${t.id})">🗑</button>
@@ -332,8 +332,8 @@ function renderTypes() {
     return;
   }
   body.innerHTML = state.types.map(t => `<tr>
-    <td><strong>${t.name}</strong></td>
-    <td>${t.class_among_can ? '<span class="bool-yes">✓ כן</span>' : '<span class="bool-no">✗ לא</span>'}</td>
+    <td data-label="שם"><strong>${t.name}</strong></td>
+    <td data-label="שיעור קבוצתי">${t.class_among_can ? '<span class="bool-yes">✓ כן</span>' : '<span class="bool-no">✗ לא</span>'}</td>
     <td class="actions-cell">
       <button class="btn btn-ghost btn-sm" onclick="openTypeModal(${t.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="confirmDelete('types',${t.id})">🗑</button>
@@ -653,7 +653,7 @@ function renderMonthView(container, titleEl) {
       html += `<div class="cal-event ${tenantColor(ev.tenant_id)}" onclick="event.stopPropagation();openSlotModal(${ev.id})">${t} ${tenantName(ev.tenant_id)}</div>`;
     });
     const totalMore = Math.max(classEvents.length - 2, 0) + Math.max(events.length - 3, 0);
-    if (totalMore > 0) html += `<div style="font-size:0.68rem;color:var(--text-secondary);padding:0 6px">+${totalMore} עוד</div>`;
+    if (totalMore > 0) html += `<div class="cal-more">+${totalMore} עוד</div>`;
     html += '</div>';
   }
 
@@ -707,7 +707,7 @@ function renderTimeGrid(container, days) {
     dayLayouts[fmtDate(d)] = withOverlapColumns(dayDisplayEvents(d));
   });
 
-  let html = '<div class="cal-time-grid">';
+  let html = `<div class="cal-time-grid${cols > 1 ? ' tg-week' : ''}">`;
 
   // Header
   html += `<div class="tg-header" style="grid-template-columns:50px repeat(${cols}, 1fr)">`;

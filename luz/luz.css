@@ -1,0 +1,96 @@
+/* Luz – weekly schedule story. Everything is scoped under .luz-story so it is safe to inject into other sites.
+   Sizes are in "design pixels" of a 1080×1920 story: calc(N * var(--u)).
+   --k shrinks the day grid when a busy week would overflow the canvas. */
+
+.luz-story {
+  --u: 1px;
+  --k: 1;
+  --head: #beada6;
+  --ink: #4d4d4d;
+  --line: #bfbfbf;
+  --paper: #f3f0ec;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Heebo', 'Assistant', 'Arial Hebrew', Arial, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.25;
+  -webkit-font-smoothing: antialiased;
+}
+.luz-story *, .luz-story *::before, .luz-story *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.luz-story.luz-fixed { width: 1080px; height: 1920px; }
+.luz-story.luz-fluid { width: 100%; }
+
+/* ---------- background layers ---------- */
+.luz-story .luz-paper,
+.luz-story .luz-pose { position: absolute; pointer-events: none; user-select: none; max-width: none; }
+.luz-story .luz-paper { inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.luz-story .luz-veil { position: absolute; inset: 0; background: rgba(243, 240, 236, .35); }
+.luz-story.luz-fluid .luz-pose { display: none; }
+
+/* ---------- content ---------- */
+.luz-story .luz-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: calc(90 * var(--u)) calc(87 * var(--u)) calc(80 * var(--u));
+}
+.luz-story.luz-fixed .luz-content { height: 100%; }
+.luz-story.luz-fluid .luz-content { padding: calc(50 * var(--u)) calc(40 * var(--u)) calc(60 * var(--u)); }
+
+.luz-story .luz-head { text-align: center; flex: none; }
+.luz-story .luz-logo { display: block; width: calc(170 * var(--u)); height: auto; margin: 0 auto calc(6 * var(--u)); }
+.luz-story .luz-sub { font-size: calc(42 * var(--u)); font-weight: 400; }
+.luz-story .luz-title { font-size: calc(96 * var(--u)); font-weight: 700; line-height: 1.1; letter-spacing: -.01em; }
+.luz-story .luz-range { font-size: calc(40 * var(--u)); font-weight: 400; direction: ltr; unicode-bidi: plaintext; margin-top: calc(4 * var(--u)); }
+
+.luz-story .luz-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: calc(55 * var(--u));
+  row-gap: calc(28 * var(--k) * var(--u));
+  align-content: space-evenly;
+  align-items: start;
+  margin-top: calc(34 * var(--u));
+}
+.luz-story.luz-fluid .luz-grid { align-content: start; row-gap: calc(44 * var(--u)); }
+.luz-story.luz-one .luz-grid { grid-template-columns: 1fr; }
+.luz-story.luz-one .luz-title { font-size: calc(76 * var(--u)); }
+
+.luz-story .luz-day.luz-sat { grid-column: 1 / -1; justify-self: center; width: calc((100% - 55 * var(--u)) / 2); }
+.luz-story.luz-one .luz-day.luz-sat { width: 100%; }
+
+.luz-story .luz-day-h {
+  background: var(--head);
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  font-size: calc(40 * var(--k) * var(--u));
+  padding: calc(9 * var(--k) * var(--u)) calc(12 * var(--u));
+  margin-bottom: calc(10 * var(--k) * var(--u));
+}
+
+.luz-story .luz-row {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  min-height: calc(64 * var(--k) * var(--u));
+  padding: calc(8 * var(--k) * var(--u)) calc(14 * var(--u));
+  border-bottom: calc(2 * var(--u)) solid var(--line);
+  font-size: calc(31 * var(--k) * var(--u));
+  color: var(--ink);
+}
+.luz-story .luz-row-name { flex: 1; text-align: center; overflow-wrap: anywhere; }
+.luz-story .luz-row-time { flex: none; font-weight: 700; direction: ltr; min-width: calc(92 * var(--k) * var(--u)); text-align: left; }
+.luz-story .luz-new { font-weight: 800; }
+.luz-story .luz-row.luz-note { justify-content: center; font-weight: 700; text-align: center; }
+.luz-story .luz-row.luz-empty { justify-content: center; opacity: .5; }
+
+.luz-story .luz-msg { margin: auto; text-align: center; font-size: calc(36 * var(--u)); opacity: .7; }

@@ -539,6 +539,7 @@
     transition: var(--transition);
   }
   .cal-event:hover { filter: brightness(0.92); }
+  .cal-more { font-size: 0.68rem; color: var(--text-secondary); padding: 0 6px; }
   .cal-class-event {
     background: #d1d5db;
     color: #4b5563;
