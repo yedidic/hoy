@@ -19,7 +19,7 @@
 <div id="stage"></div>
 <script src="./luz.js"></script>
 <script>
-  // ?c=<config from the wizard>  &mode=fixed (1080×1920 story scaled to the window, default) | fluid (responsive)
+  // ?c=<config from the wizard>  &week=YYYY-MM-DD (Sunday, overrides the config's week)  &mode=fixed (1080×1920 story scaled to the window, default) | fluid (responsive)
   (async () => {
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') === 'fluid' ? 'fluid' : 'fixed';
@@ -36,7 +36,9 @@
       scale();
     }
 
-    LUZ.mount(stage, await LUZ.decode(params.get('c')), { mode });
+    const cfg = await LUZ.decode(params.get('c'));
+    if (/^\d{4}-\d{2}-\d{2}$/.test(params.get('week'))) cfg.week = params.get('week');
+    LUZ.mount(stage, cfg, { mode });
   })();
 </script>
 </body>
