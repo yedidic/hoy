@@ -38,7 +38,7 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: calc(90 * var(--u)) calc(87 * var(--u)) calc(80 * var(--u));
+  padding: calc(90 * var(--u)) calc(48 * var(--u)) calc(80 * var(--u));
 }
 .luz-story.luz-fixed .luz-content { height: 100%; }
 .luz-story.luz-fluid .luz-content { padding: calc(50 * var(--u)) calc(40 * var(--u)) calc(60 * var(--u)); }
@@ -46,25 +46,26 @@
 .luz-story .luz-head { text-align: center; flex: none; }
 .luz-story .luz-logo { display: block; width: calc(170 * var(--u)); height: auto; margin: 0 auto calc(6 * var(--u)); }
 .luz-story .luz-sub { font-size: calc(42 * var(--u)); font-weight: 400; }
-.luz-story .luz-title { font-size: calc(96 * var(--u)); font-weight: 700; line-height: 1.1; letter-spacing: -.01em; }
+.luz-story .luz-title { font-size: calc(60 * var(--u)); font-weight: 700; line-height: 1.1; letter-spacing: -.01em; }
 .luz-story .luz-range { font-size: calc(40 * var(--u)); font-weight: 400; direction: ltr; unicode-bidi: plaintext; margin-top: calc(4 * var(--u)); }
 
 .luz-story .luz-grid {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: calc(55 * var(--u));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: calc(40 * var(--u));
   row-gap: calc(28 * var(--k) * var(--u));
   align-content: space-evenly;
   align-items: start;
   margin-top: calc(34 * var(--u));
 }
 .luz-story.luz-fluid .luz-grid { align-content: start; row-gap: calc(44 * var(--u)); }
-.luz-story.luz-one .luz-grid { grid-template-columns: 1fr; }
-.luz-story.luz-one .luz-title { font-size: calc(76 * var(--u)); }
+.luz-story.luz-one .luz-grid { grid-template-columns: minmax(0, 1fr); }
+.luz-story .luz-day { min-width: 0; }
+.luz-story.luz-one .luz-title { font-size: calc(48 * var(--u)); }
 
-.luz-story .luz-day.luz-sat { grid-column: 1 / -1; justify-self: center; width: calc((100% - 55 * var(--u)) / 2); }
+.luz-story .luz-day.luz-sat { grid-column: 1 / -1; justify-self: center; width: calc((100% - 40 * var(--u)) / 2); }
 .luz-story.luz-one .luz-day.luz-sat { width: 100%; }
 
 .luz-story .luz-day-h {
@@ -81,14 +82,15 @@
   display: flex;
   align-items: center;
   gap: calc(14 * var(--u));
-  min-height: calc(64 * var(--k) * var(--u));
-  padding: calc(8 * var(--k) * var(--u)) calc(14 * var(--u));
+  min-height: calc(70 * var(--k) * var(--u));
+  padding: calc(8 * var(--k) * var(--u)) calc(8 * var(--u));
   border-bottom: calc(2 * var(--u)) solid var(--line);
-  font-size: calc(31 * var(--k) * var(--u));
+  font-size: calc(36 * var(--k) * var(--u));
   color: var(--ink);
 }
-.luz-story .luz-row-name { flex: 1; text-align: center; overflow-wrap: anywhere; }
-.luz-story .luz-row-time { flex: none; font-weight: 700; direction: ltr; min-width: calc(92 * var(--k) * var(--u)); text-align: left; }
+/* Always one line – luz.js shrinks the font of names that don't fit */
+.luz-story .luz-row-name { flex: 1; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden; }
+.luz-story .luz-row-time { flex: none; font-weight: 700; direction: ltr; min-width: calc(106 * var(--k) * var(--u)); text-align: left; }
 .luz-story .luz-new { font-weight: 800; }
 .luz-story .luz-row.luz-note { justify-content: center; font-weight: 700; text-align: center; }
 .luz-story .luz-row.luz-empty { justify-content: center; opacity: .5; }

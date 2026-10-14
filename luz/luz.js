@@ -23,6 +23,8 @@
   const BOX_FK = '17885';
   const LOCATIONS_BOX_ID = 14927;
 
+  const HIDDEN_CATEGORIES = new Set(['תרגול אונליין']);
+
   const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const PALETTE = ['#beada6', '#a3a692', '#b8bea3', '#d9cbb6', '#4d4d4d'];
   // Pose cutouts placed in 1080×1920 design pixels
@@ -72,7 +74,8 @@
       end: String(it.end_time || '').slice(0, 5),
       cat: (it.box_categories && it.box_categories.name || '').trim(),
       coach: (it.coach && it.coach.full_name || '').trim(),
-      coachFirst: (it.coach && it.coach.first_name || '').trim()
+      coachFirst: (it.coach && it.coach.first_name || '').trim(),
+      coachLast: (it.coach && it.coach.last_name || '').trim()
     };
   }
 
@@ -95,7 +98,7 @@
     })
       .then(res => { if (!res.ok) throw new Error(`Arbox ${res.status}`); return res.json(); })
       .then(payload => (Array.isArray(payload && payload.data) ? payload.data : [])
-        .map(normalize).filter(Boolean)
+        .map(normalize).filter(c => c && !HIDDEN_CATEGORIES.has(c.cat))
         .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
     cache.set(sunIso, p);
     p.catch(() => cache.delete(sunIso));
@@ -160,7 +163,7 @@
     return Object.assign({}, c.series && cfg.series && cfg.series[c.series], cfg.one && cfg.one[c.id]);
   }
 
-  // First names that belong to more than one coach this week get the full name (טל אמויאל / טל רודן)
+  // First names that belong to more than one coach this week get the last initial (טל א. / טל ר.)
   function sharedFirstNames(classes) {
     const byFirst = {};
     classes.forEach(c => { (byFirst[c.coachFirst] = byFirst[c.coachFirst] || new Set()).add(c.coach); });
@@ -169,7 +172,9 @@
 
   function coachLabel(cfg, c, shared) {
     if (cfg.coach && cfg.coach[c.coach]) return cfg.coach[c.coach];
-    return shared.has(c.coachFirst) ? c.coach : c.coachFirst;
+    if (!shared.has(c.coachFirst)) return c.coachFirst;
+    const last = c.coachLast || c.coach.slice(c.coachFirst.length).trim();
+    return last ? `${c.coachFirst} ${last[0]}.` : c.coach;
   }
 
   function defaultText(cfg, c, shared) {
@@ -238,16 +243,25 @@
       </div>`;
   }
 
-  // Shrink the day grid until it fits inside the 1920px canvas
+  // Shrink the day grid until it fits inside the 1920px canvas, then shrink any class name that overflows its one line
   function fit(el) {
     const grid = el.querySelector('.luz-grid');
-    if (!grid || !el.classList.contains('luz-fixed')) return;
-    let k = 1;
-    el.style.setProperty('--k', k);
-    while (grid.scrollHeight > grid.clientHeight + 1 && k > 0.55) {
-      k = Math.round((k - 0.03) * 100) / 100;
+    if (!grid) return;
+    const names = grid.querySelectorAll('.luz-row-name');
+    names.forEach(n => { n.style.fontSize = ''; });
+    if (el.classList.contains('luz-fixed')) {
+      let k = 1;
       el.style.setProperty('--k', k);
+      while (grid.scrollHeight > grid.clientHeight + 1 && k > 0.55) {
+        k = Math.round((k - 0.03) * 100) / 100;
+        el.style.setProperty('--k', k);
+      }
     }
+    names.forEach(n => {
+      if (n.scrollWidth <= n.clientWidth) return;
+      const size = parseFloat(getComputedStyle(n).fontSize);
+      n.style.fontSize = Math.floor(size * n.clientWidth / n.scrollWidth * 10) / 10 + 'px';
+    });
   }
 
   function fluidSize(el) {
@@ -262,7 +276,7 @@
     el.classList.remove(mode === 'fluid' ? 'luz-fixed' : 'luz-fluid');
     el.style.setProperty('--head', cfg.color || DEFAULTS.color);
     if (mode === 'fluid' && !el._luzRO && window.ResizeObserver) {
-      el._luzRO = new ResizeObserver(() => fluidSize(el));
+      el._luzRO = new ResizeObserver(() => { fluidSize(el); fit(el); });
       el._luzRO.observe(el);
     }
     if (mode === 'fluid') fluidSize(el);
